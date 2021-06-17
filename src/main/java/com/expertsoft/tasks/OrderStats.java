@@ -4,9 +4,7 @@ import com.expertsoft.model.*;
 import com.expertsoft.util.AveragingBigDecimalCollector;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -108,15 +106,18 @@ class OrderStats {
      * @return java.util.Optional containing the name of the most popular country
      */
     static Optional<String> mostPopularCountry(final Stream<Customer> customers) {
+        // Sort by country frequency (desc) and then by country name length (asc)
+        Comparator<Map.Entry<String, Long>> entryComparator = (o1, o2) -> {
+            int res = -o1.getValue().compareTo(o2.getValue());
+            return res == 0 ? o1.getKey().length() - o2.getKey().length() : res;
+        };
         return customers
                 .map(customer -> customer.getAddress().getCountry())
-                .collect(Collectors.groupingBy(String::valueOf))
-                .values()
-                .stream()
-                .sorted((a, b) -> b.size() - a.size())
-                .collect(Collectors.toList()).stream().findFirst()
-                .stream()
-                .map(c -> c.get(0)).findFirst();
+                .collect(Collectors.groupingBy(String::valueOf, Collectors.counting()))
+                .entrySet()
+                .stream().sorted(entryComparator)
+                .map(Map.Entry::getKey)
+                .findFirst();
     }
 
     /**
