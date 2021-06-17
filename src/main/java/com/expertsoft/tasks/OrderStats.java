@@ -4,7 +4,6 @@ import com.expertsoft.model.*;
 import com.expertsoft.util.AveragingBigDecimalCollector;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -109,7 +108,15 @@ class OrderStats {
      * @return java.util.Optional containing the name of the most popular country
      */
     static Optional<String> mostPopularCountry(final Stream<Customer> customers) {
-        return null;
+        return customers
+                .map(customer -> customer.getAddress().getCountry())
+                .collect(Collectors.groupingBy(String::valueOf))
+                .values()
+                .stream()
+                .sorted((a, b) -> b.size() - a.size())
+                .collect(Collectors.toList()).stream().findFirst()
+                .stream()
+                .map(c -> c.get(0)).findFirst();
     }
 
     /**
@@ -133,6 +140,10 @@ class OrderStats {
      */
     static BigDecimal averageProductPriceForCreditCard(final Stream<Customer> customers, final String cardNumber) {
         final AveragingBigDecimalCollector collector = new AveragingBigDecimalCollector();
-        return null;
+        return customers.flatMap(customer -> customer.getOrders().stream())
+                .filter(order -> order.getPaymentInfo().getCardNumber().equals(cardNumber))
+                .flatMap(order -> order.getOrderItems().stream())
+                .flatMap(orderItem -> Stream.generate(orderItem::getProduct).limit(orderItem.getQuantity()))
+                .map(Product::getPrice).collect(collector);
     }
 }
