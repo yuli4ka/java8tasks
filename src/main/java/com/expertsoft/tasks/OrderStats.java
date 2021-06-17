@@ -4,6 +4,7 @@ import com.expertsoft.model.*;
 import com.expertsoft.util.AveragingBigDecimalCollector;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -78,7 +79,13 @@ class OrderStats {
      * @return map, where for each customer email there is a long referencing a number of different credit cards this customer uses.
      */
     static Map<String, Long> cardsCountForCustomer(final Stream<Customer> customers) {
-        return null;
+        return customers.collect(
+                Collectors.toMap(Customer::getEmail,
+                        c -> c.getOrders()
+                                .stream()
+                                .map(o -> o.getPaymentInfo().getCardNumber())
+                                .distinct().count())
+        );
     }
 
     /**
